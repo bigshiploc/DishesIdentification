@@ -17,8 +17,6 @@ def read_and_decode(tfrecords_file, batch_size):
     image = tf.decode_raw(img_features['image_raw'], tf.uint8)
 
     ##########################################################
-    # you can put data augmentation here, I didn't use it
-    ##########################################################
     # all the images of notMNIST are 28*28, you need to change the image size if you use other dataset.
     image = tf.reshape(image, [208, 208, 3])
     image = tf.cast(image, tf.float32) # normalize
