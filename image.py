@@ -1,13 +1,14 @@
 # %%
-
+# -*- coding: UTF-8 -*-
 import os
 from PIL import Image
 
 # %%
 
 # you need to change this to your data directory
-train_dir = './image'
+# train_dir = './data/duojiaoyutou'
 def chage_image():
+    train_dir = input('Input dir : ')
     filenames = os.listdir(train_dir)
     filenames = [os.path.join(train_dir, item) for item in filenames]
     for filename in filenames:

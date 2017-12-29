@@ -9,8 +9,9 @@ IMG_W = 208  # resize the image, if the input image is too large, training will 
 IMG_H = 208
 BATCH_SIZE = 16
 CAPACITY = 2000
-MAX_STEP = 10000 # with current parameters, it is suggested to use MAX_STEP>10k
+MAX_STEP = 30000 # with current parameters, it is suggested to use MAX_STEP>10k
 learning_rate = 0.0001 # with current parameters, it is suggested to use learning rate<0.0001
+
 
 # 读取TFRecord数据
 def read_and_decode(tfrecords_file, batch_size):
@@ -25,15 +26,23 @@ def read_and_decode(tfrecords_file, batch_size):
             'image_raw': tf.FixedLenFeature([], tf.string),
         })
     image = tf.decode_raw(img_features['image_raw'], tf.uint8)
+    image = tf.reshape(image, [IMG_W, IMG_H, 3])
+    image = tf.cast(image, tf.float32)
+
+    #data augmentation here
+    distorted_image = tf.random_crop(image, [180, 180, 3]) #随机剪裁
+    distorted_image = tf.image.random_flip_left_right(distorted_image) #水平反转
+    distorted_image = tf.image.random_brightness(distorted_image,  # 设置随机亮度
+                                                 max_delta=63)
+    distorted_image = tf.image.random_contrast(distorted_image,  # 设置随机饱和度
+                                               lower=0.2, upper=1.8)
+    float_image = tf.image.per_image_standardization(distorted_image)  # 对数据进行标准化
 
     ##########################################################
-    # you can put data augmentation here, I didn't use it
-    ##########################################################
-    # all the images of notMNIST are 28*28, you need to change the image size if you use other dataset.
-    image = tf.reshape(image, [IMG_W, IMG_H, 3])
-    image = tf.cast(image, tf.float32) # normalize
+    # all the images of notMNIST are 28*28, you need to  change the image size if you use other dataset.
+     # normalize
     label = tf.cast(img_features['label'], tf.int32)
-    image_batch, label_batch = tf.train.batch([image, label],
+    image_batch, label_batch = tf.train.batch([float_image, label],
                                               batch_size=batch_size,
                                               num_threads=64,
                                               capacity=2000)

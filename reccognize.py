@@ -22,8 +22,8 @@ import tensorflow as tf
 
 def evaluate_one_image():
 
-
-    image = Image.open('./image/鲤鱼.jpg')
+    path = input("输入你想要识别的图片路径:")
+    image = Image.open(path)
     # image = image.resize((208, 208))
     image = image.resize([208,208])
     image = image.convert('RGB')
@@ -69,9 +69,9 @@ def evaluate_one_image():
             elif max_index==2:
                 print ('This is 可乐鸡翅 with possibility %.6f' %prediction[:, 2])
             elif max_index==3:
-                print ('This is 剁椒鱼头 with possibility %.6f' %prediction[:, 3])
+                print ('This is 葱油藕片 with possibility %.6f' %prediction[:, 3])
             elif max_index==4:
-                print ('This is 麻婆豆腐 with possibility %.6f' %prediction[:, 4])
+                print ('This is 鸡蛋羹 with possibility %.6f' %prediction[:, 4])
             elif max_index==5:
                 print ('This is 宫爆鸡丁 with possibility %.6f' %prediction[:, 5])
             elif max_index==6:

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import tensorflow as tf
 import numpy as np
 import os
@@ -29,23 +30,23 @@ def get_file(file_dir):
         n_img = len(os.listdir(one_folder))
         letter = one_folder.split('/')[-1]
         letter = letter.split("\\")[1]
-        if letter == 'AntsClimbingTrees':
+        if letter == '蚂蚁上树':
             labels = np.append(labels, n_img * [0])
-        elif letter == 'beans':
+        elif letter == '干煸四季豆':
             labels = np.append(labels, n_img * [1])
-        elif letter == 'ColaChickenWings':
+        elif letter == '可乐鸡翅':
             labels = np.append(labels, n_img * [2])
-        elif letter == 'headWithChoppedPepper':
+        elif letter == '葱油藕片':
             labels = np.append(labels, n_img * [3])
-        elif letter == 'MapoTofu':
+        elif letter == '鸡蛋羹':
             labels = np.append(labels, n_img * [4])
-        elif letter == 'SpicyChicken':
+        elif letter == '宫爆鸡丁':
             labels = np.append(labels, n_img * [5])
-        elif letter == 'SweatAndSourCarp':
+        elif letter == '糖醋鲤鱼':
             labels = np.append(labels, n_img * [6])
-        elif letter == 'SweetAndSourPork':
+        elif letter == '糖醋里脊':
             labels = np.append(labels, n_img * [7])
-        elif letter == 'Vegetable&Pork':
+        elif letter == '梅菜扣肉':
             labels = np.append(labels, n_img * [8])
         else:
             labels = np.append(labels, n_img * [9])

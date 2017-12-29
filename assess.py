@@ -33,7 +33,7 @@ def evaluate():
     with tf.Graph().as_default():
 
         log_dir = './model'
-        test_dir = './data/test.tfrecords'
+        test_dir = './data/train.tfrecords'
         n_test = 10000,
         BATCH_SIZE = 16
         n_classes = 10
