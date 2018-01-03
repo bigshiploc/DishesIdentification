@@ -9,7 +9,7 @@ IMG_W = 208  # resize the image, if the input image is too large, training will 
 IMG_H = 208
 BATCH_SIZE = 16
 CAPACITY = 2000
-MAX_STEP = 30000 # with current parameters, it is suggested to use MAX_STEP>10k
+MAX_STEP = 50000 # with current parameters, it is suggested to use MAX_STEP>10k
 learning_rate = 0.0001 # with current parameters, it is suggested to use learning rate<0.0001
 
 
@@ -30,7 +30,7 @@ def read_and_decode(tfrecords_file, batch_size):
     image = tf.cast(image, tf.float32)
 
     #data augmentation here
-    distorted_image = tf.random_crop(image, [180, 180, 3]) #随机剪裁
+    distorted_image = tf.random_crop(image, [190, 190, 3]) #随机剪裁
     distorted_image = tf.image.random_flip_left_right(distorted_image) #水平反转
     distorted_image = tf.image.random_brightness(distorted_image,  # 设置随机亮度
                                                  max_delta=63)

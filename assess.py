@@ -18,7 +18,7 @@ def read_and_decode(tfrecords_file, batch_size):
 
     ##########################################################
     # all the images of notMNIST are 28*28, you need to change the image size if you use other dataset.
-    image = tf.reshape(image, [208, 208, 3])
+    image = tf.reshape(image, [190, 190, 3])
     image = tf.cast(image, tf.float32) # normalize
     label = tf.cast(img_features['label'], tf.int32)
     image_batch, label_batch = tf.train.batch([image, label],
@@ -31,7 +31,7 @@ def evaluate():
     with tf.Graph().as_default():
 
         log_dir = './model'
-        test_dir = './data/train.tfrecords'
+        test_dir = './data/test.tfrecords'
         n_test = 10000,
         BATCH_SIZE = 16
         n_classes = 10
