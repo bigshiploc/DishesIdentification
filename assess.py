@@ -3,6 +3,10 @@ import model
 import math
 import numpy as np
 
+n_test = 3254
+BATCH_SIZE = 16
+n_classes = 10
+
 def read_and_decode(tfrecords_file, batch_size):
     filename_queue = tf.train.string_input_producer([tfrecords_file])
 
@@ -18,7 +22,7 @@ def read_and_decode(tfrecords_file, batch_size):
 
     ##########################################################
     # all the images of notMNIST are 28*28, you need to change the image size if you use other dataset.
-    image = tf.reshape(image, [190, 190, 3])
+    image = tf.reshape(image, [208, 208, 3])
     image = tf.cast(image, tf.float32) # normalize
     label = tf.cast(img_features['label'], tf.int32)
     image_batch, label_batch = tf.train.batch([image, label],
@@ -32,14 +36,13 @@ def evaluate():
 
         log_dir = './model'
         test_dir = './data/test.tfrecords'
-        n_test = 10000,
-        BATCH_SIZE = 16
-        n_classes = 10
         # reading test data
         images, labels =read_and_decode(test_dir,BATCH_SIZE,)
 
         logits = model.inference(images,BATCH_SIZE,n_classes)
         top_k_op = tf.nn.in_top_k(logits, labels, 1)
+        correct = tf.cast(top_k_op, tf.float16)
+        accuracy = tf.reduce_mean(correct)
         saver = tf.train.Saver(tf.global_variables())
 
         with tf.Session() as sess:
@@ -58,17 +61,20 @@ def evaluate():
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             try:
-                num_iter = 10000 / 16
+                num_iter = int(math.ceil(n_test / BATCH_SIZE))
                 true_count = 0
                 total_sample_count = num_iter * BATCH_SIZE
                 step = 0
 
                 while step < num_iter and not coord.should_stop():
-                    predictions = sess.run([top_k_op])
+                    acc,predictions = sess.run([accuracy,top_k_op])
                     true_count += np.sum(predictions)
                     step += 1
                     precision = true_count / total_sample_count
+                    recall = true_count / 3254
                 print('precision = %.5f' % precision)
+                print ('accuracy = %.5f' % acc)
+                print ('recall = %.5f' % recall)
             except Exception as e:
                 coord.request_stop(e)
             finally:

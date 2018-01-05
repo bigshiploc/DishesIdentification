@@ -24,8 +24,8 @@ def evaluate_one_image():
 
     path = input("输入你想要识别的图片路径:")
     image = Image.open(path)
-    # image = image.resize((208, 208))
-    image = image.resize([190,190])
+    image = image.resize((208, 208))
+    # image = image.resize([190,190])
     image = image.convert('RGB')
     image_array = np.array(image)
 
@@ -35,12 +35,12 @@ def evaluate_one_image():
 
         image = tf.cast(image_array, tf.float32)
         image = tf.image.per_image_standardization(image)
-        image = tf.reshape(image, [1, 190, 190, 3]) #将图片变成思维张量
+        image = tf.reshape(image, [1, 208, 208, 3]) #将图片变成思维张量
         logit = model.inference(image, BATCH_SIZE, N_CLASSES)
 
         logit = tf.nn.softmax(logit)
 
-        x = tf.placeholder(tf.float32, shape=[190, 190, 3])
+        x = tf.placeholder(tf.float32, shape=[208, 208, 3])
 
         # you need to change the directories to yours.
         logs_train_dir = './model'
