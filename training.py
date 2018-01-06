@@ -10,7 +10,7 @@ IMG_H = 208
 BATCH_SIZE = 16
 CAPACITY = 2000
 MAX_STEP = 60000 # with current parameters, it is suggested to use MAX_STEP>10k
-learning_rate = 1e-3 # 学习率 建议小于0.0001
+learning_rate = 0.0001 # 学习率 建议小于0.0001
 
 
 # 读取TFRecord数据
