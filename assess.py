@@ -71,10 +71,8 @@ def evaluate():
                     true_count += np.sum(predictions)
                     step += 1
                     precision = true_count / total_sample_count
-                    recall = true_count / 3254
                 print('precision = %.5f' % precision)
                 print ('accuracy = %.5f' % acc)
-                print ('recall = %.5f' % recall)
             except Exception as e:
                 coord.request_stop(e)
             finally:

@@ -11,13 +11,16 @@ def inference(images, batch_size, n_classes):
     '''
     # conv1, shape = [kernel size, kernel size, channels, kernel numbers]
 
+    regularizer = tf.contrib.layers.l2_regularizer(scale=5.0 / 50000)
+
     with tf.variable_scope('conv1') as scope:
         weights = tf.get_variable('weights',
-                                  shape=[3, 3, 3, 16], #（5*5的卷积核大小，3个颜色通道（彩色），16个卷积核 ）现有的形状
+                                  shape=[11, 11, 3, 64], #（5*5的卷积核大小，3个颜色通道（彩色），16个卷积核 ）现有的形状
                                   dtype=tf.float32,  #类型
+                                  regularizer=regularizer,
                                   initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=tf.float32)) #初始化张量
         biases = tf.get_variable('biases',
-                                 shape=[16],
+                                 shape=[64],
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.0)) #初始化为0.0 ？原来是0.1
         conv = tf.nn.conv2d(images, weights, strides=[1, 1, 1, 1], padding='SAME') #卷积操作
@@ -27,18 +30,19 @@ def inference(images, batch_size, n_classes):
     # pool1 and norm1
     with tf.variable_scope('pooling1_lrn') as scope:
         pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], #步长为3×3,尺寸为2×2最大池化层来池化
-                               padding='SAME', name='pooling1')
+                               padding='VALID', name='pooling1')
         norm1 = tf.nn.lrn(pool1, depth_radius=4, bias=1.0, alpha=0.001 / 9.0,  #lrn对结果进行处理（lrn对relu这种激活函数比较有用）
                           beta=0.75, name='norm1')
 
     # conv2
     with tf.variable_scope('conv2') as scope:
         weights = tf.get_variable('weights',
-                                  shape=[3, 3, 16, 16], #上一层的卷积核数量是16，所以第三个维度输入的通道数也为16
+                                  shape=[5, 5, 64, 192], #上一层的卷积核数量是16，所以第三个维度输入的通道数也为16
                                   dtype=tf.float32,
+                                  regularizer=regularizer,
                                   initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=tf.float32))
         biases = tf.get_variable('biases',
-                                 shape=[16],
+                                 shape=[192],
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1)) #初始化为0.1
         conv = tf.nn.conv2d(norm1, weights, strides=[1, 1, 1, 1], padding='SAME')
@@ -49,12 +53,62 @@ def inference(images, batch_size, n_classes):
     with tf.variable_scope('pooling2_lrn') as scope:
         norm2 = tf.nn.lrn(conv2, depth_radius=4, bias=1.0, alpha=0.001 / 9.0,
                           beta=0.75, name='norm2')
-        pool2 = tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1], strides=[1, 1, 1, 1], #步长为3×3,尺寸为1×1
-                               padding='SAME', name='pooling2')
+        pool2 = tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], #步长为3×3,尺寸为1×1
+                               padding='VALID', name='pooling2')
+
+    # conv3
+    with tf.variable_scope('conv3')  as scope:
+        weights = tf.get_variable('weigths',
+                                  shape=[3, 3, 192, 384],
+                                  dtype=tf.float32,
+                                  regularizer=regularizer,
+                                  initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=tf.float32))
+        biases = tf.get_variable('biases',
+                                 shape=[384],
+                                 dtype=tf.float32,
+                                 initializer=tf.constant_initializer(0.1))
+        conv = tf.nn.conv2d(pool2,weights, strides=[1,1,1,1], padding='SAME')
+        pre_activation = tf.nn.bias_add(conv, biases)
+        conv3 = tf.nn.relu(pre_activation, name= 'conv3')
+
+    # conv4
+    with tf.variable_scope('conv4') as scope:
+        weights = tf.get_variable('weigths',
+                                  shape=[3,3,384,256],
+                                  dtype=tf.float32,
+                                  regularizer=regularizer,
+                                  initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=tf.float32))
+        biases = tf.get_variable('biases',
+                                 shape=[256],
+                                 dtype=tf.float32,
+                                 initializer=tf.constant_initializer(0.1))
+        conv = tf.nn.conv2d(conv3,weights, strides=[1,1,1,1], padding='SAME')
+        pre_activation = tf.nn.bias_add(conv, biases)
+        conv4 = tf.nn.relu(pre_activation, name='conv4')
+
+    # conv5
+    with tf.variable_scope('conv5') as scope:
+        weights = tf.get_variable('weigths',
+                                  shape=[3,3,256,256],
+                                  dtype=tf.float32,
+                                  regularizer=regularizer,
+                                  initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=tf.float32))
+        biases = tf.get_variable('biases',
+                                 shape=[256],
+                                 dtype=tf.float32,
+                                 initializer=tf.constant_initializer(0.1))
+        conv = tf.nn.conv2d(conv4,weights, strides=[1,1,1,1], padding='SAME')
+        pre_activation = tf.nn.bias_add(conv, biases)
+        conv5 = tf.nn.relu(pre_activation, name='conv5')
+
+    # pool3
+    with tf.variable_scope('pooling3') as scope:
+        pool3 = tf.nn.max_pool(conv5, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1],  # 步长为3×3,尺寸为2×2
+                               padding='VALID', name='pooling2')
 
     # local3 两个卷积之后是一个全连接层，将连个卷积的输出结果全部flatten
     with tf.variable_scope('local3') as scope:
-        reshape = tf.reshape(pool2, shape=[batch_size, -1]) #将pool2变成一维向量
+        reshape = tf.reshape(pool3, shape=[batch_size, -1]) #将pool2变成一维向量
         dim = reshape.get_shape()[1].value  #数据扁平化之后的长度
         weights = tf.get_variable('weights',
                                   shape=[dim, 128], #隐含节点数为128？ 348？
@@ -66,7 +120,7 @@ def inference(images, batch_size, n_classes):
                                  initializer=tf.constant_initializer(0.1))  #初始化为0.1
         local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)  #这一层被l2正则约束然后激活
 
-        # local4
+    # local4
     with tf.variable_scope('local4') as scope:
         weights = tf.get_variable('weights',
                                   shape=[128, 64],  #隐含节点数要下降一半
@@ -77,6 +131,7 @@ def inference(images, batch_size, n_classes):
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(local3, weights) + biases, name='local4')
+
 
     # softmax  正态分布标准差是上一个隐含层的节点数的倒数
     with tf.variable_scope('softmax_linear') as scope:
@@ -106,7 +161,7 @@ def losses(logits, labels):
     with tf.variable_scope('loss') as scope:
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits \
             (logits=logits, labels=labels, name='xentropy_per_example') #回归之后的交叉熵损失函数
-        loss = tf.reduce_mean(cross_entropy, name='loss')  #对cross_entropy计算均值
+        loss = tf.reduce_mean(cross_entropy, name='loss')  #对cross_entropy计算均值, 方差损失函数
         tf.summary.scalar(scope.name + '/loss', loss)
     return loss
 

@@ -9,7 +9,7 @@ IMG_W = 208  # resize the image, if the input image is too large, training will 
 IMG_H = 208
 BATCH_SIZE = 16
 CAPACITY = 2000
-MAX_STEP = 60000 # with current parameters, it is suggested to use MAX_STEP>10k
+MAX_STEP = 100000 # with current parameters, it is suggested to use MAX_STEP>10k
 learning_rate = 0.0001 # 学习率 建议小于0.0001
 
 
@@ -55,7 +55,6 @@ def run_training():
     logs_train_dir = './logs/train/'
 
     train_batch, train_label_batch = read_and_decode('./data/train.tfrecords', batch_size=BATCH_SIZE)
-
     train_logits = model.inference(train_batch, BATCH_SIZE, N_CLASSES)
     train_loss = model.losses(train_logits, train_label_batch)
     train_op = model.trainning(train_loss, learning_rate)
@@ -67,6 +66,7 @@ def run_training():
     saver = tf.train.Saver()
 
     sess.run(tf.global_variables_initializer())
+    tf.reset_default_graph()
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
