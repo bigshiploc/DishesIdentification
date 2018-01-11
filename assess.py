@@ -3,7 +3,7 @@ import model
 import math
 import numpy as np
 
-n_test = 3254
+n_test = 10000
 BATCH_SIZE = 16
 n_classes = 10
 

@@ -11,7 +11,7 @@ def inference(images, batch_size, n_classes):
     '''
     # conv1, shape = [kernel size, kernel size, channels, kernel numbers]
 
-    regularizer = tf.contrib.layers.l2_regularizer(scale=5.0 / 50000)
+    regularizer = tf.contrib.layers.l2_regularizer(scale=.5)
 
     with tf.variable_scope('conv1') as scope:
         weights = tf.get_variable('weights',
@@ -111,39 +111,74 @@ def inference(images, batch_size, n_classes):
         reshape = tf.reshape(pool3, shape=[batch_size, -1]) #将pool2变成一维向量
         dim = reshape.get_shape()[1].value  #数据扁平化之后的长度
         weights = tf.get_variable('weights',
-                                  shape=[dim, 128], #隐含节点数为128？ 348？
+                                  shape=[dim, 4096], #隐含节点数为128？ 348？
                                   dtype=tf.float32,
                                   initializer=tf.truncated_normal_initializer(stddev=0.005, dtype=tf.float32)) #正态分布标准差为0.005
         biases = tf.get_variable('biases',
-                                 shape=[128],
+                                 shape=[4096],
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))  #初始化为0.1
         local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)  #这一层被l2正则约束然后激活
 
+
+    #batch_norm1
+    with tf.variable_scope('batch_norm1') as scope:
+        epsilon = 1e-3
+        batch_mean, batch_var = tf.nn.moments(local3, [0])
+        batch1 = tf.nn.batch_normalization(local3,
+                                      mean=batch_mean,
+                                      variance=batch_var,
+                                      offset=None,
+                                      scale=None,
+                                      variance_epsilon=epsilon)
+
     # local4
     with tf.variable_scope('local4') as scope:
         weights = tf.get_variable('weights',
-                                  shape=[128, 64],  #隐含节点数要下降一半
+                                  shape=[4096, 4096],  #隐含节点数要下降一半
                                   dtype=tf.float32,
                                   initializer=tf.truncated_normal_initializer(stddev=0.005, dtype=tf.float32))
         biases = tf.get_variable('biases',
-                                 shape=[64],
+                                 shape=[4096],
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
-        local4 = tf.nn.relu(tf.matmul(local3, weights) + biases, name='local4')
+        local4 = tf.nn.relu(tf.matmul(batch1, weights) + biases, name='local4')
+
+    #batch_norm2
+    with tf.variable_scope('batch_norm2') as scope:
+        epsilon = 1e-3
+        batch_mean, batch_var = tf.nn.moments(local4, [0])
+        batch2 = tf.nn.batch_normalization(local4,
+                                           mean=batch_mean,
+                                           variance=batch_var,
+                                           offset=None,
+                                           scale=None,
+                                           variance_epsilon=epsilon)
+
+     # local5
+    with tf.variable_scope('local5') as scope:
+        weights = tf.get_variable('weights',
+                                  shape=[4096, 1000],
+                                  dtype=tf.float32,
+                                  initializer=tf.truncated_normal_initializer(stddev=0.005, dtype=tf.float32))
+        biases = tf.get_variable('biases',
+                                 shape=[1000],
+                                 dtype=tf.float32,
+                                 initializer=tf.constant_initializer(0.1))
+        local5 = tf.nn.relu(tf.matmul(batch2,weights) + biases, name='local5')
 
 
     # softmax  正态分布标准差是上一个隐含层的节点数的倒数
     with tf.variable_scope('softmax_linear') as scope:
         weights = tf.get_variable('softmax_linear',
-                                  shape=[64, n_classes],
+                                  shape=[1000, n_classes],
                                   dtype=tf.float32,
                                   initializer=tf.truncated_normal_initializer(stddev=0.005, dtype=tf.float32))
         biases = tf.get_variable('biases',
                                  shape=[n_classes],
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.0)) #初始化，原为0.1
-        softmax_linear = tf.add(tf.matmul(local4, weights), biases, name='softmax_linear')
+        softmax_linear = tf.add(tf.matmul(local5, weights), biases, name='softmax_linear')
 
     return softmax_linear
 

@@ -9,7 +9,7 @@ IMG_W = 208  # resize the image, if the input image is too large, training will 
 IMG_H = 208
 BATCH_SIZE = 16
 CAPACITY = 2000
-MAX_STEP = 100000 # with current parameters, it is suggested to use MAX_STEP>10k
+MAX_STEP = 60000 # with current parameters, it is suggested to use MAX_STEP>10k
 learning_rate = 0.0001 # 学习率 建议小于0.0001
 
 
